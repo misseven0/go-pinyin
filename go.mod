@@ -1,3 +1,3 @@
-module github.com/mozillazg/go-pinyin
+module github.com/misseven0/go-pinyin
 
-go 1.11
+go 1.20

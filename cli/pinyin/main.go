@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-isatty"
-	"github.com/mozillazg/go-pinyin"
+	"github.com/misseven0/go-pinyin"
 )
 
 func main() {
