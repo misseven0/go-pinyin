@@ -72,6 +72,9 @@ type Args struct {
 	// 处理没有拼音的字符（默认忽略没有拼音的字符）
 	// 函数返回的 slice 的长度为0 则表示忽略这个字符
 	Fallback func(r rune, a Args) []string
+
+	Transform func(e string) string //结果变化函数,比如首字母大写等操作,nil表示对结果不做任何改变
+	Uniq      bool                  //是否对结果去重,默认true
 }
 
 // Style 默认配置：风格
@@ -95,11 +98,11 @@ var finalExceptionsMap = map[string]string{
 	"ù": "ǜ",
 }
 var reFinalExceptions = regexp.MustCompile("^(j|q|x)(ū|ú|ǔ|ù)$")
-var reFinal2Exceptions = regexp.MustCompile("^(j|q|x)u(\\d?)$")
+var reFinal2Exceptions = regexp.MustCompile(`^(j|q|x)u(\d?)$`)
 
 // NewArgs 返回包含默认配置的 `Args`
 func NewArgs() Args {
-	return Args{Style, Heteronym, Separator, Fallback}
+	return Args{Style, Heteronym, Separator, Fallback, nil, true}
 }
 
 // 获取单个拼音中的声母
@@ -125,7 +128,7 @@ func final(p string) string {
 	matches := reFinalExceptions.FindStringSubmatch(p)
 	// jū -> jǖ
 	if len(matches) == 3 && matches[1] != "" && matches[2] != "" {
-		v, _ := finalExceptionsMap[matches[2]]
+		v := finalExceptionsMap[matches[2]]
 		return v
 	}
 	// ju -> jv, ju1 -> jv1
@@ -158,7 +161,7 @@ func toFixed(p string, a Args) string {
 
 	// 替换拼音中的带声调字符
 	py := rePhoneticSymbol.ReplaceAllStringFunc(p, func(m string) string {
-		symbol, _ := phoneticSymbol[m]
+		symbol := phoneticSymbol[m]
 		switch a.Style {
 		// 不包含声调
 		case Normal, FirstLetter, Finals:
@@ -202,16 +205,22 @@ func applyStyle(p []string, a Args) []string {
 	for _, v := range p {
 		newP = append(newP, toFixed(v, a))
 	}
+	//对结果进行转换
+	if a.Transform != nil {
+		for i, p := range newP {
+			newP[i] = a.Transform(p)
+		}
+	}
 	return newP
 }
 
 // SinglePinyin 把单个 `rune` 类型的汉字转换为拼音.
-func SinglePinyin(r rune, a Args) []string {
+func SinglePinyin(r rune, a Args) (pys []string) {
 	if a.Fallback == nil {
 		a.Fallback = Fallback
 	}
 	value, ok := PinyinDict[int(r)]
-	pys := []string{}
+	// var pys []string
 	if ok {
 		pys = strings.Split(value, ",")
 	} else {
@@ -221,7 +230,11 @@ func SinglePinyin(r rune, a Args) []string {
 		if !a.Heteronym {
 			pys = []string{pys[0]}
 		}
-		return applyStyle(pys, a)
+		pys = applyStyle(pys, a)
+		//对结果去重
+		if a.Uniq {
+			pys = Uniq(pys)
+		}
 	}
 	return pys
 }
