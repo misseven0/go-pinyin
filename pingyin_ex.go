@@ -19,9 +19,10 @@ func ToUpper(s string) string {
 	}
 	return strings.ToUpper(s)
 }
+
 func ConvertAll(text string, args *Args) [][]string {
 	pinyins := Convert(text, args)
-	return CartesianProduct(pinyins)
+	return cartesianProduct(pinyins)
 }
 
 func SlugAll(text string, a Args) []string {
@@ -31,11 +32,23 @@ func SlugAll(text string, a Args) []string {
 		pSlug := strings.Join(v, a.Separator)
 		slugs = append(slugs, pSlug)
 	}
-	// pinyinsSlugs = Uniq(pinyinsSlugs)
+	// slugs = Uniq(slugs)
 	return slugs
 }
 
-func Uniq[T comparable](s []T) []T {
+// Slug多音字支持
+func SlugEx(s string, a Args) []string {
+	if a.Heteronym { //多音字
+		return SlugAll(s, a)
+	} else {
+		return []string{Slug(s, a)}
+	}
+}
+
+// Uniq returns a duplicate-free version of an array, in which only the first occurrence of each element is kept.
+// The order of result values is determined by the order they occur in the array.
+// Play: https://go.dev/play/p/DTzbeXZ6iEN
+func uniq[T comparable](s []T) []T {
 	if len(s) <= 1 { //only 1 element
 		return s
 	}
@@ -52,7 +65,7 @@ func Uniq[T comparable](s []T) []T {
 }
 
 // 排列组合 笛卡尔积
-func CartesianProduct(slices [][]string) [][]string {
+func cartesianProduct(slices [][]string) [][]string {
 	// 如果输入的二维切片为空，返回空切片
 	if len(slices) == 0 {
 		return [][]string{}

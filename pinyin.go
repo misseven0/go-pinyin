@@ -7,7 +7,7 @@ import (
 
 // Meta
 const (
-	Version   = "0.20.0"
+	Version   = "0.21.0" //forked from mozillazg go-pinyin 0.20.0
 	Author    = "mozillazg, 闲耘"
 	License   = "MIT"
 	Copyright = "Copyright (c) 2016 mozillazg, 闲耘"
@@ -233,7 +233,7 @@ func SinglePinyin(r rune, a Args) (pys []string) {
 		pys = applyStyle(pys, a)
 		//对结果去重
 		if a.Uniq {
-			pys = Uniq(pys)
+			pys = uniq(pys)
 		}
 	}
 	return pys
